@@ -131,9 +131,8 @@ resource "azurerm_api_management_api_operation" "hello" {
   resource_group_name = azurerm_api_management_api.cacheapi.resource_group_name
   display_name        = "hello"
   method              = "GET"
-  url_template        = "/"
+  url_template        = "/api/HttpTrigger"
   description         = "This can only be done by the logged in user."
-
   request {
     query_parameter {
       name = "name"
@@ -161,6 +160,7 @@ resource "azurerm_api_management_api_operation_policy" "cache" {
       <cache-lookup vary-by-developer="false" vary-by-developer-groups="false">
         <vary-by-query-parameter>name</vary-by-query-parameter>
       </cache-lookup>
+      <set-backend-service backend-id="${azurerm_api_management_backend.func.name}" />
     </inbound>
     <backend>
       <base />
