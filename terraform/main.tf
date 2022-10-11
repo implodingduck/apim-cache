@@ -164,11 +164,11 @@ resource "azurerm_storage_container" "secrets" {
   container_access_type = "private"
 }
 
-# resource "azurerm_role_assignment" "system" {
-#   scope                = azurerm_storage_account.sa.id
-#   role_definition_name = "Storage Blob Data Owner"
-#   principal_id         = azurerm_linux_function_app.func.identity.0.principal_id  
-# }
+resource "azurerm_role_assignment" "system" {
+  scope                = azurerm_storage_account.sa.id
+  role_definition_name = "Storage Blob Data Owner"
+  principal_id         = azurerm_linux_function_app.func.identity.0.principal_id  
+}
 
 resource "azurerm_service_plan" "asp" {
   name                = "asp-${local.func_name}"
@@ -187,33 +187,34 @@ resource "azurerm_application_insights" "app" {
 }
 
 
-# resource "azurerm_linux_function_app" "func" {
-#   name                = local.func_name
-#   resource_group_name = azurerm_resource_group.rg.name
-#   location            = azurerm_resource_group.rg.location
+resource "azurerm_linux_function_app" "func" {
+  name                = local.func_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
 
-#   service_plan_id           = azurerm_service_plan.asp.id
-#   storage_account_name = azurerm_storage_account.sa.name
-#   virtual_network_subnet_id = azurerm_subnet.func.id
+  service_plan_id           = azurerm_service_plan.asp.id
+  storage_account_name = azurerm_storage_account.sa.name
+  storage_account_access_key = azurerm_storage_account.sa.primary_access_key
+  virtual_network_subnet_id = azurerm_subnet.func.id
 
 
-#   site_config {
-#     application_insights_connection_string = azurerm_application_insights.app.connection_string
-#     application_insights_key               = azurerm_application_insights.app.instrumentation_key
-#     vnet_route_all_enabled                 = true
-#     application_stack {
-#       python_version = "3.8"
-#     }
+  site_config {
+    application_insights_connection_string = azurerm_application_insights.app.connection_string
+    application_insights_key               = azurerm_application_insights.app.instrumentation_key
+    vnet_route_all_enabled                 = true
+    application_stack {
+      python_version = "3.8"
+    }
 
-#   }
-#   identity {
-#     type = "SystemAssigned"
-#   }
-#   app_settings = {
+  }
+  identity {
+    type = "SystemAssigned"
+  }
+  app_settings = {
 
-#   }
+  }
 
-# }
+}
 
 resource "local_file" "localsettings" {
   content  = <<-EOT
