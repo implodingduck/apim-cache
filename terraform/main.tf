@@ -54,3 +54,13 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
   tags = local.tags
 }
+
+resource "azurerm_api_management" "apim" {
+  name                = "apim${random_string.unique.result}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  publisher_name      = "Implodingduck"
+  publisher_email     = "something@nothing.com"
+
+  sku_name = "Developer_1"
+}
