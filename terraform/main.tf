@@ -158,7 +158,9 @@ resource "azurerm_linux_function_app" "func" {
   location            = azurerm_resource_group.rg.location
 
   service_plan_id           = azurerm_service_plan.asp.id
+  storage_account_name = azurerm_storage_account.sa.name
   virtual_network_subnet_id = azurerm_subnet.func.id
+
 
   site_config {
     application_insights_connection_string = azurerm_application_insights.app.connection_string
