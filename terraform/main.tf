@@ -113,6 +113,76 @@ resource "azurerm_api_management" "apim" {
   sku_name = "Developer_1"
 }
 
+resource "azurerm_api_management_api" "cacheapi" {
+  name                = "cache-api"
+  resource_group_name = azurerm_resource_group.rg.name
+  api_management_name = azurerm_api_management.apim.name
+  revision            = "1"
+  display_name        = "Cache API"
+  path                = "cacheapi"
+  protocols           = ["https"]
+  
+}
+
+resource "azurerm_api_management_api_operation" "hello" {
+  operation_id        = "hello"
+  api_name            = azurerm_api_management_api.cacheapi.name
+  api_management_name = azurerm_api_management_api.cacheapi.api_management_name
+  resource_group_name = azurerm_api_management_api.cacheapi.resource_group_name
+  display_name        = "hello"
+  method              = "GET"
+  url_template        = "/"
+  description         = "This can only be done by the logged in user."
+
+  query_parameter {
+    name = "name"
+    required = false
+    type = "string"
+  }
+
+  response {
+    status_code = 200
+  }
+}
+
+resource "azurerm_api_management_api_operation_policy" "cache" {
+  api_name            = azurerm_api_management_api_operation.hello.api_name
+  api_management_name = azurerm_api_management_api_operation.hello.api_management_name
+  resource_group_name = azurerm_api_management_api_operation.hello.resource_group_name
+  operation_id        = azurerm_api_management_api_operation.hello.operation_id
+
+  xml_content = <<XML
+<policies>
+    <inbound>
+      <base />
+      <cache-lookup vary-by-developer="false" vary-by-developer-groups="false">
+        <vary-by-query-parameter>name</vary-by-query-parameter>
+      </cache-lookup>
+    </inbound>
+    <backend>
+      <base />
+    </backend>
+    <outbound>
+      <base />
+      <cache-store duration="20" />
+    </outbound>
+    <on-error>
+      <base />
+    </on-error>
+</policies>
+XML
+
+}
+
+resource "azurerm_api_management_backend" "func" {
+  name                = "func-backend"
+  resource_group_name = azurerm_resource_group.rg.name
+  api_management_name = azurerm_api_management.apim.name
+  protocol            = "http"
+  url                 = "https://${azurerm_linux_function_app.func.default_hostname}"
+}
+
+
 resource "azurerm_redis_cache" "cache" {
   name                = "cache${random_string.unique.result}"
   location            = azurerm_resource_group.rg.location
