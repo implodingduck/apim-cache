@@ -17,17 +17,17 @@ terraform {
 provider "azurerm" {
   features {
     resource_group {
-│       prevent_deletion_if_contains_resources = false
-│     }
+      prevent_deletion_if_contains_resources = false
+    }
   }
 
   subscription_id = var.subscription_id
 }
 
 locals {
-  func_name = "func${random_string.unique.result}"
+  func_name      = "func${random_string.unique.result}"
   loc_for_naming = lower(replace(var.location, " ", ""))
-  gh_repo = replace(var.gh_repo, "implodingduck/", "")
+  gh_repo        = replace(var.gh_repo, "implodingduck/", "")
   tags = {
     "managed_by" = "terraform"
     "repo"       = local.gh_repo
@@ -46,17 +46,17 @@ data "azurerm_client_config" "current" {}
 data "azurerm_log_analytics_workspace" "default" {
   name                = "DefaultWorkspace-${data.azurerm_client_config.current.subscription_id}-EUS"
   resource_group_name = "DefaultResourceGroup-EUS"
-} 
+}
 
 data "azurerm_network_security_group" "basic" {
-    name                = "basic"
-    resource_group_name = "rg-network-eastus"
+  name                = "basic"
+  resource_group_name = "rg-network-eastus"
 }
 
 resource "azurerm_resource_group" "rg" {
   name     = "rg-${local.gh_repo}-${random_string.unique.result}-${local.loc_for_naming}"
   location = var.location
-  tags = local.tags
+  tags     = local.tags
 }
 
 resource "azurerm_virtual_network" "default" {
@@ -91,11 +91,11 @@ resource "azurerm_subnet" "func" {
 }
 
 resource "azurerm_api_management" "apim" {
-  name                = "apim${random_string.unique.result}"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  publisher_name      = "Implodingduck"
-  publisher_email     = "something@nothing.com"
+  name                 = "apim${random_string.unique.result}"
+  location             = azurerm_resource_group.rg.location
+  resource_group_name  = azurerm_resource_group.rg.name
+  publisher_name       = "Implodingduck"
+  publisher_email      = "something@nothing.com"
   virtual_network_type = "External"
   virtual_network_configuration {
     subnet_id = azurerm_subnet.apim.id
@@ -162,15 +162,15 @@ resource "azurerm_linux_function_app" "func" {
 
   site_config {
     application_insights_connection_string = azurerm_application_insights.app.connection_string
-    application_insights_key = azurerm_application_insights.app.instrumentation_key
-    vnet_route_all_enabled   = true
+    application_insights_key               = azurerm_application_insights.app.instrumentation_key
+    vnet_route_all_enabled                 = true
     application_stack {
       python_version = "3.8"
     }
-    
+
   }
   identity {
-    type         = "SystemAssigned"
+    type = "SystemAssigned"
   }
   app_settings = {
 
@@ -179,7 +179,7 @@ resource "azurerm_linux_function_app" "func" {
 }
 
 resource "local_file" "localsettings" {
-    content     = <<-EOT
+  content  = <<-EOT
 {
   "IsEncrypted": false,
   "Values": {
@@ -188,7 +188,7 @@ resource "local_file" "localsettings" {
   }
 }
 EOT
-    filename = "../func/local.settings.json"
+  filename = "../func/local.settings.json"
 }
 
 
@@ -203,6 +203,6 @@ resource "null_resource" "publish_func" {
   provisioner "local-exec" {
     working_dir = "../func"
     command     = "timeout 10m func azure functionapp publish ${azurerm_linux_function_app.func.name} --build remote"
-    
+
   }
 }
