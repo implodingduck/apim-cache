@@ -134,11 +134,14 @@ resource "azurerm_api_management_api_operation" "hello" {
   url_template        = "/"
   description         = "This can only be done by the logged in user."
 
-  query_parameter {
-    name = "name"
-    required = false
-    type = "string"
+  request {
+    query_parameter {
+      name = "name"
+      required = false
+      type = "string"
+    }
   }
+  
 
   response {
     status_code = 200
