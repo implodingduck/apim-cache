@@ -88,6 +88,15 @@ resource "azurerm_subnet" "func" {
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.default.name
   address_prefixes     = ["10.2.2.0/24"]
+  delegation {
+    name = "serverfarm-delegation"
+    service_delegation {
+      name = "Microsoft.Web/serverFarms"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/action",
+      ]
+    }
+  }
 }
 
 resource "azurerm_api_management" "apim" {
