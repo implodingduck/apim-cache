@@ -203,7 +203,7 @@ resource "azurerm_linux_function_app" "func" {
     application_insights_key               = azurerm_application_insights.app.instrumentation_key
     vnet_route_all_enabled                 = true
     application_stack {
-      python_version = "3.8"
+      node_version = "16"
     }
 
   }
@@ -221,7 +221,7 @@ resource "local_file" "localsettings" {
 {
   "IsEncrypted": false,
   "Values": {
-    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": ""
   }
 }
