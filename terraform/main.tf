@@ -288,6 +288,7 @@ resource "azurerm_linux_function_app" "func" {
     "ENABLE_ORYX_BUILD"              = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
     "XDG_CACHE_HOME"                 = "/tmp/.cache"
+    "CACHE_CONNSTR" = "@Microsoft.KeyVault(SecretUri=https://${azurerm_key_vault.kv.name}.vault.azure.net/secrets/${azurerm_key_vault_secret.cacheconnstr.name}/)" 
   }
 
 }
@@ -319,4 +320,74 @@ resource "null_resource" "publish_func" {
     command     = "timeout 10m func azure functionapp publish ${azurerm_linux_function_app.func.name} --build remote"
 
   }
+}
+
+resource "azurerm_key_vault" "kv" {
+  name                       = "kv-${local.func_name}"
+  location                   = azurerm_resource_group.rg.location
+  resource_group_name        = azurerm_resource_group.rg.name
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  sku_name                   = "standard"
+  soft_delete_retention_days = 7
+  purge_protection_enabled   = false
+  
+}
+
+
+resource "azurerm_key_vault_access_policy" "sp" {
+  key_vault_id = azurerm_key_vault.kv.id
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  object_id = data.azurerm_client_config.current.object_id
+  
+  key_permissions = [
+    "Create",
+    "Get",
+    "Purge",
+    "Recover",
+    "Delete"
+  ]
+
+  secret_permissions = [
+    "Set",
+    "Purge",
+    "Get",
+    "List",
+    "Delete"
+  ]
+
+  certificate_permissions = [
+    "Purge"
+  ]
+
+  storage_permissions = [
+    "Purge"
+  ]
+  
+}
+
+
+resource "azurerm_key_vault_access_policy" "func" {
+  key_vault_id = azurerm_key_vault.kv.id
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  object_id = azurerm_linux_function_app.func.identity.0.principal_id
+  
+  key_permissions = [
+    "Get",
+  ]
+
+  secret_permissions = [
+    "Get",
+    "List"
+  ]
+  
+}
+
+resource "azurerm_key_vault_secret" "cacheconnstr" {
+  depends_on = [
+    azurerm_key_vault_access_policy.sp
+  ]
+  name         = "cacheconnstr"
+  value        = azurerm_redis_cache.cache.primary_connection_string
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tags
 }
