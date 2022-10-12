@@ -167,7 +167,7 @@ resource "azurerm_api_management_api_operation_policy" "cache" {
     </backend>
     <outbound>
       <base />
-      <cache-store duration="20" />
+      <cache-store duration="300" />
     </outbound>
     <on-error>
       <base />

@@ -13,7 +13,13 @@ module.exports = async function (context, req) {
     );
     await client.connect()    
     const cachekey = (req.query.cachekey || (req.body && req.body.cachekey));
-    const cacheresp = await client.get(cachekey)
+    let cacheresp = ""
+    if(cachekey){
+        cacheresp = await client.get(cachekey)
+    }else{
+        cacheresp = await client.sendCommand(["keys","*"]);
+    }
+    
     
 
     context.res = {
