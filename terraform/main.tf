@@ -109,8 +109,33 @@ resource "azurerm_api_management" "apim" {
   virtual_network_configuration {
     subnet_id = azurerm_subnet.apim.id
   }
-
+  policy = [
+    {
+      xml_content = <<-EOT
+    <!--
+        IMPORTANT:
+        - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.
+        - Only the <forward-request> policy element can appear within the <backend> section element.
+        - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.
+        - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.
+        - To add a policy position the cursor at the desired insertion point and click on the round button associated with the policy.
+        - To remove a policy, delete the corresponding policy statement from the policy document.
+        - Policies are applied in the order of their appearance, from the top down.
+    -->
+    <policies>
+      <inbound />
+      <backend>
+        <forward-request />
+      </backend>
+      <outbound />
+    </policies>
+EOT
+      xml_link    = ""
+    },
+  ]
+  zones    = []
   sku_name = "Developer_1"
+  tags     = local.tags
 }
 
 resource "azurerm_api_management_api" "cacheapi" {
@@ -121,7 +146,7 @@ resource "azurerm_api_management_api" "cacheapi" {
   display_name        = "Cache API"
   path                = "cacheapi"
   protocols           = ["https"]
-  
+
 }
 
 resource "azurerm_api_management_api_operation" "hello" {
@@ -135,12 +160,12 @@ resource "azurerm_api_management_api_operation" "hello" {
   description         = "This can only be done by the logged in user."
   request {
     query_parameter {
-      name = "name"
+      name     = "name"
       required = false
-      type = "string"
+      type     = "string"
     }
   }
-  
+
 
   response {
     status_code = 200
@@ -240,7 +265,7 @@ resource "azurerm_storage_container" "secrets" {
 resource "azurerm_role_assignment" "system" {
   scope                = azurerm_storage_account.sa.id
   role_definition_name = "Storage Blob Data Owner"
-  principal_id         = azurerm_linux_function_app.func.identity.0.principal_id  
+  principal_id         = azurerm_linux_function_app.func.identity.0.principal_id
 }
 
 resource "azurerm_service_plan" "asp" {
@@ -265,10 +290,10 @@ resource "azurerm_linux_function_app" "func" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
 
-  service_plan_id           = azurerm_service_plan.asp.id
-  storage_account_name = azurerm_storage_account.sa.name
+  service_plan_id            = azurerm_service_plan.asp.id
+  storage_account_name       = azurerm_storage_account.sa.name
   storage_account_access_key = azurerm_storage_account.sa.primary_access_key
-  virtual_network_subnet_id = azurerm_subnet.func.id
+  virtual_network_subnet_id  = azurerm_subnet.func.id
 
 
   site_config {
@@ -288,7 +313,7 @@ resource "azurerm_linux_function_app" "func" {
     "ENABLE_ORYX_BUILD"              = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
     "XDG_CACHE_HOME"                 = "/tmp/.cache"
-    "CACHE_CONNSTR" = "@Microsoft.KeyVault(SecretUri=https://${azurerm_key_vault.kv.name}.vault.azure.net/secrets/${azurerm_key_vault_secret.cacheconnstr.name}/)" 
+    "CACHE_CONNSTR"                  = "@Microsoft.KeyVault(SecretUri=https://${azurerm_key_vault.kv.name}.vault.azure.net/secrets/${azurerm_key_vault_secret.cacheconnstr.name}/)"
   }
 
 }
@@ -330,15 +355,15 @@ resource "azurerm_key_vault" "kv" {
   sku_name                   = "standard"
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
-  
+
 }
 
 
 resource "azurerm_key_vault_access_policy" "sp" {
   key_vault_id = azurerm_key_vault.kv.id
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = data.azurerm_client_config.current.object_id
-  
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
   key_permissions = [
     "Create",
     "Get",
@@ -362,15 +387,15 @@ resource "azurerm_key_vault_access_policy" "sp" {
   storage_permissions = [
     "Purge"
   ]
-  
+
 }
 
 
 resource "azurerm_key_vault_access_policy" "func" {
   key_vault_id = azurerm_key_vault.kv.id
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = azurerm_linux_function_app.func.identity.0.principal_id
-  
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_linux_function_app.func.identity.0.principal_id
+
   key_permissions = [
     "Get",
   ]
@@ -379,7 +404,7 @@ resource "azurerm_key_vault_access_policy" "func" {
     "Get",
     "List"
   ]
-  
+
 }
 
 resource "azurerm_key_vault_secret" "cacheconnstr" {

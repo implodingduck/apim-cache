@@ -15,8 +15,8 @@ module.exports = async function (context, req) {
     const cachekey = (req.query.cachekey || (req.body && req.body.cachekey) || "SetCacheKey");
     const cacheVal = ((req.body && req.body.value) || "SetCacheValue")
     let cacheresp = ""
-    await client.setAsync(cachekey, cacheVal);
-    cacheresp = await client.getAsync(cachekey);
+    await client.set(cachekey, cacheVal);
+    cacheresp = await client.get(cachekey);
     
 
     context.res = {
