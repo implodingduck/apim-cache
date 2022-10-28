@@ -220,7 +220,7 @@ resource "azurerm_redis_cache" "cache" {
   sku_name            = "Basic"
   enable_non_ssl_port = false
   minimum_tls_version = "1.2"
-
+  redis_version = "6"
   redis_configuration {
   }
 }
