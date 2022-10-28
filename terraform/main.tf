@@ -130,6 +130,7 @@ resource "azurerm_api_management" "apim" {
       <outbound />
     </policies>
 EOT
+      xml_link    = null
     },
   ]
   zones    = []
